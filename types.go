@@ -1,5 +1,17 @@
 package laddro
 
+type ArtifactMetadata struct {
+	ResumeID      string
+	CoverLetterID string
+	Filename      string
+	MimeType      string
+}
+
+type BinaryResponse struct {
+	Data     []byte
+	Metadata ArtifactMetadata
+}
+
 type ResumeSummary struct {
 	ID        string `json:"id"`
 	ResumeID  string `json:"resumeId"`
@@ -104,23 +116,25 @@ type TailorRequest struct {
 }
 
 type CoverLetterSummary struct {
-	ID            string `json:"id"`
-	CoverLetterID string `json:"coverLetterId"`
-	Title         string `json:"title"`
-	CreatedAt     string `json:"createdAt"`
-	UpdatedAt     string `json:"updatedAt"`
+	ID            string         `json:"id"`
+	CoverLetterID string         `json:"coverLetterId"`
+	Title         string         `json:"title"`
+	LetterContent string         `json:"letterContent,omitempty"`
+	Data          map[string]any `json:"data,omitempty"`
+	CreatedAt     string         `json:"createdAt"`
+	UpdatedAt     string         `json:"updatedAt"`
 }
 
 type CreateCoverLetterRequest struct {
-	Title          string `json:"title,omitempty"`
-	FullName       string `json:"fullName"`
-	JobTitle       string `json:"jobTitle,omitempty"`
-	Address        string `json:"address,omitempty"`
-	Email          string `json:"email,omitempty"`
-	Phone          string `json:"phone,omitempty"`
-	CompanyName    string `json:"companyName,omitempty"`
-	HiringManager  string `json:"hiringManager,omitempty"`
-	LetterContent  string `json:"letterContent"`
+	Title         string `json:"title,omitempty"`
+	FullName      string `json:"fullName"`
+	JobTitle      string `json:"jobTitle,omitempty"`
+	Address       string `json:"address,omitempty"`
+	Email         string `json:"email,omitempty"`
+	Phone         string `json:"phone,omitempty"`
+	CompanyName   string `json:"companyName,omitempty"`
+	HiringManager string `json:"hiringManager,omitempty"`
+	LetterContent string `json:"letterContent"`
 }
 
 type CreateCoverLetterResponse struct {
