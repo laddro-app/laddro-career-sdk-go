@@ -41,8 +41,16 @@ func (s *CoverLettersService) Generate(ctx context.Context, req GenerateCoverLet
 	return s.client.doBinary(ctx, "POST", "/v1/cover-letters/generate", req)
 }
 
+func (s *CoverLettersService) GenerateDetailed(ctx context.Context, req GenerateCoverLetterRequest) (*BinaryResponse, error) {
+	return s.client.doBinaryDetailed(ctx, "POST", "/v1/cover-letters/generate", req)
+}
+
 func (s *CoverLettersService) Upload(ctx context.Context, file io.Reader, fileName string, fields map[string]string) ([]byte, error) {
 	return s.client.doMultipartBinary(ctx, "/v1/cover-letters/generate", fields, fileName, file)
+}
+
+func (s *CoverLettersService) UploadDetailed(ctx context.Context, file io.Reader, fileName string, fields map[string]string) (*BinaryResponse, error) {
+	return s.client.doMultipartBinaryDetailed(ctx, "/v1/cover-letters/generate", fields, fileName, file)
 }
 
 func (s *CoverLettersService) Render(ctx context.Context, id string, opts RenderOptions) ([]byte, error) {

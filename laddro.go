@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -94,6 +95,14 @@ func (c *Client) doJSON(ctx context.Context, method, path string, body any, resu
 }
 
 func (c *Client) doBinary(ctx context.Context, method, path string, body any) ([]byte, error) {
+	resp, err := c.doBinaryDetailed(ctx, method, path, body)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Data, nil
+}
+
+func (c *Client) doBinaryDetailed(ctx context.Context, method, path string, body any) (*BinaryResponse, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		b, err := json.Marshal(body)
@@ -124,10 +133,26 @@ func (c *Client) doBinary(ctx context.Context, method, path string, body any) ([
 		return nil, parseError(resp)
 	}
 
-	return io.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return &BinaryResponse{
+		Data:     data,
+		Metadata: artifactMetadata(resp.Header),
+	}, nil
 }
 
 func (c *Client) doMultipartBinary(ctx context.Context, path string, fields map[string]string, fileName string, fileData io.Reader) ([]byte, error) {
+	resp, err := c.doMultipartBinaryDetailed(ctx, path, fields, fileName, fileData)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Data, nil
+}
+
+func (c *Client) doMultipartBinaryDetailed(ctx context.Context, path string, fields map[string]string, fileName string, fileData io.Reader) (*BinaryResponse, error) {
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)
 
@@ -165,7 +190,15 @@ func (c *Client) doMultipartBinary(ctx context.Context, path string, fields map[
 		return nil, parseError(resp)
 	}
 
-	return io.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return &BinaryResponse{
+		Data:     data,
+		Metadata: artifactMetadata(resp.Header),
+	}, nil
 }
 
 func (c *Client) doSSE(ctx context.Context, method, path string, body any) (<-chan SSEEvent, error) {
@@ -259,6 +292,25 @@ func addQuery(path string, params map[string]string) string {
 		return path
 	}
 	return path + "?" + v.Encode()
+}
+
+func artifactMetadata(header http.Header) ArtifactMetadata {
+	mimeType := header.Get("Content-Type")
+	if mediaType, _, err := mime.ParseMediaType(mimeType); err == nil {
+		mimeType = mediaType
+	}
+
+	filename := ""
+	if _, params, err := mime.ParseMediaType(header.Get("Content-Disposition")); err == nil {
+		filename = params["filename"]
+	}
+
+	return ArtifactMetadata{
+		ResumeID:      header.Get("X-Resume-Id"),
+		CoverLetterID: header.Get("X-Cover-Letter-Id"),
+		Filename:      filename,
+		MimeType:      mimeType,
+	}
 }
 
 func intParam(n int) string {
